@@ -123,14 +123,14 @@ func (e *ConnectServerToken) GetToken() {
 	req := new(HttpRequest)
 	req.SetMethod(e.method)
 
-	url := e.formConnect.url.GetText()
-	if url == "" {
+	urlStr := e.formConnect.url.GetText()
+	if urlStr == "" {
 		if e.errorFunc != nil {
-			e.errorFunc(errors.New("URL em branco"))
+			e.errorFunc(errors.New("URL is empty"))
 		}
 		return
 	}
-	req.SetUrl(url)
+	req.SetUrl(urlStr)
 
 	for k := range e.header {
 		req.AddHeader(e.header[k].Key, e.header[k].Value)

@@ -9,19 +9,24 @@ import (
 
 // DataController Gera os dados a serem usados nos testes e recebe os dados reais.
 type DataController struct {
-	DataTestA    Data
-	DataTestB    Data
-	DataServerA  Data
-	DataServerB  Data
-	fieldWidth   int
-	formData     FormDataTest
-	form         *tview.Form
-	dataKeys     []string
-	amountOfData int
-	interactions int
-	numberOfKeys int
-	deleteKeys   int
-	errorFunc    func(error)
+	DataTestA       Data
+	DataTestB       Data
+	DataServerA     Data
+	DataServerB     Data
+	fieldWidth      int
+	formData        FormDataTest
+	form            *tview.Form
+	dataKeys        []string
+	amountOfData    int
+	interactions    int
+	numberOfKeys    int
+	deleteKeys      int
+	errorFunc       func(error)
+	eventUpdateKeys func([]string)
+}
+
+func (e *DataController) SetUpdateKeys(f func([]string)) {
+	e.eventUpdateKeys = f
 }
 
 func (e *DataController) SetErrorFunc(f func(error)) {
@@ -89,6 +94,10 @@ func (e *DataController) updateValuesFromFields() {
 	e.SetInteractions(e.formData.GetInteractions())
 	e.SetNumberOfKeys(e.formData.GetNumberOfKeys())
 	e.SetDeleteKeys(e.formData.GetDeleteKeys())
+
+	if e.eventUpdateKeys != nil {
+		e.eventUpdateKeys(e.dataKeys)
+	}
 }
 
 func (e *DataController) buttonGenerate() {
@@ -123,6 +132,6 @@ func (e *DataController) mountFormData() {
 
 	//e.form.AddTextView("Teste:", "", e.fieldWidth, 1, false, false)
 
-	e.form.AddButton("Gerar", e.buttonGenerate)
+	e.form.AddButton("Atualizar", e.buttonGenerate)
 
 }

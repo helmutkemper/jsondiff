@@ -93,6 +93,7 @@ func (e *Data) makeUniqueKeys(v any, campos []string) string {
 		if field.IsValid() {
 			chave += fmt.Sprintf("%v|", field.Interface()) // Concatena os valores das chaves
 		} else {
+			//e.logText += fmt.Sprintf("Campo %s não encontrado na struct %s", campo, tipo.Name())
 			if e.errorFunc != nil {
 				e.errorFunc(errors.Join(errors.New("Data().makeUniqueKeys().error"), errors.New(fmt.Sprintf("Campo %s não encontrado na struct %s", campo, tipo.Name()))))
 			}

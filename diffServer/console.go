@@ -69,7 +69,7 @@ func (e *Console) newPages() {
 	e.pageName = "serverBToken"
 	e.pages.AddPage(e.pageName, e.connectServerBData.ConnectServerToken.form, true, true)
 
-	e.pageName = "serverAToken"
+	e.pageName = "serverAData"
 	e.pages.SendToFront(e.pageName)
 }
 
@@ -143,6 +143,8 @@ func (e *Console) newMenu() {
 			func() {
 				e.pages.SendToFront("dataCompare")
 				e.changeFocus()
+				bf := e.compareController.CompareGrid.bottomForm
+				e.app.SetFocus(bf)
 			},
 		).
 		//AddItem("Compare", "Compare json", 'c', compareFunc).
@@ -191,6 +193,7 @@ func (e *Console) Init() {
 	e.connectServerBData.SetDataReceiver(&e.dataController.DataServerB)
 	e.connectServerBData.Init(e.fieldWidth)
 
+	e.dataController.SetUpdateKeys(e.compareController.SetDataKeys)
 	e.dataController.SetErrorFunc(e.SetError)
 	e.dataController.Init(e.fieldWidth)
 

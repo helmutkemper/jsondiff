@@ -160,8 +160,10 @@ func (e *ConnectServerData) mountFormData() {
 	e.formConnect.Mount(e.form)
 
 	//e.form.AddButton("Get token", e.buttonGetTestToken)
-	//e.form.AddButton("real token", e.buttonGetRealToken)
-	e.form.AddButton("test data", e.buttonGetTestData)
+	e.form.AddButton("set test url", func() {
+		e.formConnect.url.SetText(e.dataServer.GetUrl())
+	})
+	e.form.AddButton("get data", e.buttonGetData)
 
 	//e.form.AddTextView("Resposta:", "", e.fieldWidth, 1, false, false)
 
@@ -182,7 +184,7 @@ func (e *ConnectServerData) mountFormData() {
 //	e.eventOnButtonGetTestData = f
 //}
 
-func (e *ConnectServerData) buttonGetTestData() {
+func (e *ConnectServerData) buttonGetData() {
 	//for kh := range e.formConnect.header {
 	//	if e.formConnect.header[kh].GetLabel() == "Authorization" {
 	//		if e.formConnect.header[kh].GetText() == "" {
@@ -194,7 +196,7 @@ func (e *ConnectServerData) buttonGetTestData() {
 	e.SetStatus("Aguardando dado de teste")
 	//go func() {
 	//defer e.SetStatusNeutro()
-	e.GetTestData()
+	e.GetData()
 
 	l := len(e.dataReceiverPointer.Data)
 	i := "chaves"
@@ -235,30 +237,35 @@ func (e *ConnectServerData) buttonGetTestData() {
 //	e.SetStatusNeutro()
 //}
 
-func (e *ConnectServerData) GetTestData() {
-	e.getData(true)
-}
-
-func (e *ConnectServerData) getData(test bool) {
+func (e *ConnectServerData) GetData() {
 
 	// Define a resposta do servidor de teste
 	e.dataServer.Init()
 	e.dataServer.SetResponse(e.dataSendPointer)
 
 	// Informa a URL do servidor de teste na UI
-	if test && e.formConnect.url.GetText() == "" {
-		e.formConnect.url.SetText(e.dataServer.GetUrl())
+	//if test && e.formConnect.url.GetText() == "" {
+	//	e.formConnect.url.SetText(e.dataServer.GetUrl())
+	//}
+
+	urlStr := e.formConnect.url.GetText()
+	if urlStr == "" {
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New(fmt.Sprintf("ConnectServerData().getData().error")), errors.New("URL is empty")))
+		}
+		return
 	}
 
 	// Prepara a requisição
 	req := new(HttpRequest)
 	req.SetMethod(e.method)
+	req.SetUrl(urlStr)
 
-	if test {
-		req.SetUrl(e.dataServer.GetUrl())
-	} else {
-		req.SetUrl(e.formConnect.url.GetText())
-	}
+	//if test {
+	//	req.SetUrl(e.dataServer.GetUrl())
+	//} else {
+	//	req.SetUrl(e.formConnect.url.GetText())
+	//}
 
 	for k := range e.header {
 		req.AddHeader(e.header[k].Key, e.header[k].Value)
@@ -272,7 +279,7 @@ func (e *ConnectServerData) getData(test bool) {
 	err := json.Unmarshal([]byte(response), e.dataReceiverPointer)
 	if err != nil {
 		if e.errorFunc != nil {
-			e.errorFunc(errors.Join(errors.New(fmt.Sprintf("ConnectServerData().getData(%v).json.Unmarshal().error", test)), err))
+			e.errorFunc(errors.Join(errors.New(fmt.Sprintf("ConnectServerData().getData().json.Unmarshal().error")), err))
 		}
 		return
 	}

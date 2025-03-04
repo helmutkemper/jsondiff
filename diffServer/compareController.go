@@ -13,7 +13,12 @@ type CompareController struct {
 	dataBPointer *Data
 	indexErr     int
 	index        int
+	dataKeys     []string
 	errorFunc    func(error)
+}
+
+func (e *CompareController) SetDataKeys(keys []string) {
+	e.dataKeys = keys
 }
 
 func (e *CompareController) SetErrorFunc(f func(error)) {
@@ -118,10 +123,25 @@ func (e *CompareController) jsColor(jsA, jsB []byte) (coloredA, coloredB []byte)
 }
 
 func (e *CompareController) Compare() {
+
+	if len(e.dataAPointer.Data) == 0 {
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New("CompareController().Compare().error"), errors.New("the A server did not receive data")))
+		}
+		return
+	}
+
+	if len(e.dataBPointer.Data) == 0 {
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New("CompareController().Compare().error"), errors.New("the B server did not receive data")))
+		}
+		return
+	}
+
 	e.indexErr = 0
 	e.index = 0
 
-	e.dataAPointer.Compare(e.dataBPointer.Data, []string{"ID"}) // todo: tirar ID daqui!
+	e.dataAPointer.Compare(e.dataBPointer.Data, e.dataKeys)
 	e.SetLog(e.dataAPointer.GetLog())
 
 	jsA, jsB := e.GetElementsErr(0)
