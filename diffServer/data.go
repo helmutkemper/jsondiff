@@ -2,6 +2,7 @@ package diffServer
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v7"
 	"math/rand"
@@ -12,10 +13,15 @@ import (
 )
 
 type Data struct {
-	Data     []Pessoa `json:"data"`
-	logText  string
-	elementA []any
-	elementB []any
+	Data      []Pessoa `json:"data"`
+	logText   string
+	elementA  []any
+	elementB  []any
+	errorFunc func(error)
+}
+
+func (e *Data) SetErrorFunc(f func(error)) {
+	e.errorFunc = f
 }
 
 func (e *Data) GetLog() string {
@@ -39,12 +45,18 @@ func (e *Data) GetElements(index int) (elementA, elementB []byte) {
 	if index >= 0 && index < len(e.elementA) {
 		elementA, err = json.MarshalIndent(e.elementA[index], "", "  ")
 		if err != nil {
-			panic(err)
+			if e.errorFunc != nil {
+				e.errorFunc(errors.Join(errors.New("Data().GetElements().json.MarshalIndent(A).error"), err))
+			}
+			return
 		}
 
 		elementB, err = json.MarshalIndent(e.elementB[index], "", "  ")
 		if err != nil {
-			panic(err)
+			if e.errorFunc != nil {
+				e.errorFunc(errors.Join(errors.New("Data().GetElements().json.MarshalIndent(B).error"), err))
+			}
+			return
 		}
 
 		return elementA, elementB
@@ -81,7 +93,11 @@ func (e *Data) makeUniqueKeys(v any, campos []string) string {
 		if field.IsValid() {
 			chave += fmt.Sprintf("%v|", field.Interface()) // Concatena os valores das chaves
 		} else {
-			panic(fmt.Sprintf("Campo %s não encontrado na struct %s", campo, tipo.Name()))
+			if e.errorFunc != nil {
+				e.errorFunc(errors.Join(errors.New("Data().makeUniqueKeys().error"), errors.New(fmt.Sprintf("Campo %s não encontrado na struct %s", campo, tipo.Name()))))
+			}
+			return ""
+
 		}
 	}
 	return chave
@@ -95,7 +111,10 @@ func (e *Data) Compare(data any, keys []string) {
 	valB := reflect.ValueOf(data)
 
 	if valA.Kind() != reflect.Slice || valB.Kind() != reflect.Slice {
-		panic("Os parâmetros devem ser slices")
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New("Data().makeUniqueKeys().error"), errors.New("ss parâmetros devem ser slices")))
+		}
+		return
 	}
 
 	// Criar um mapa de busca para os elementos de B
@@ -168,7 +187,8 @@ func (e *Data) deleteKeys(data Data, deleteKeys int) {
 }
 
 // copy o dado original
-//  O sistema necessita de dados quase iguais, por isto a cópia
+//
+//	O sistema necessita de dados quase iguais, por isto a cópia
 func (e *Data) copy(data Data) {
 	e.Data = make([]Pessoa, len(data.Data))
 	copy(e.Data, data.Data)
@@ -229,7 +249,8 @@ func (e *Data) blurringFunctions() (list []func(pessoa Pessoa) (embarrassedPerso
 }
 
 // blurring Altera n chaves (numberOfKeys) dentro de um struct do dado para x dados (interactions)
-//  Exemplo, escolhe um struct de forma aleatória e altera a chave pessoa
+//
+//	Exemplo, escolhe um struct de forma aleatória e altera a chave pessoa
 func (e *Data) blurring(interactions, numberOfKeys int) {
 	rand.Seed(time.Now().UnixNano())
 

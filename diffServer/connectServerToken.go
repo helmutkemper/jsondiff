@@ -2,6 +2,7 @@ package diffServer
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/rivo/tview"
 	"strconv"
 )
@@ -19,11 +20,13 @@ type ConnectServerToken struct {
 	tokenServer testServerToken
 	token       Token
 
-	event func(Token)
+	event     func(Token)
+	errorFunc func(error)
 }
 
 // SetEvent Recebe o ponteiro de função para quando o token é recebido
-//   Esta é a única maneira de passar um evento de dentro para fora de um struct
+//
+//	Esta é a única maneira de passar um evento de dentro para fora de um struct
 func (e *ConnectServerToken) SetEvent(event func(Token)) {
 	e.event = event
 }
@@ -105,16 +108,7 @@ func (e *ConnectServerToken) Init(fieldWidth int) {
 	e.mountFormToken()
 }
 
-// GetTestToken Esta função é pública para que o token possa ser pego nas duas telas, dados e token
-func (e *ConnectServerToken) GetTestToken() {
-	e.getToken(true)
-}
-
-func (e *ConnectServerToken) GetRealToken() {
-	e.getToken(false)
-}
-
-func (e *ConnectServerToken) getToken(test bool) {
+func (e *ConnectServerToken) GetToken() {
 
 	// Monta o token a ser enviado pelo servidor de teste
 	tk := new(Token)
@@ -125,20 +119,18 @@ func (e *ConnectServerToken) getToken(test bool) {
 	e.tokenServer.TestServer.Init()
 	e.tokenServer.TestServer.SetResponse(&tk)
 
-	// Informa a URL do servidor de teste na UI
-	if test && e.formConnect.url.GetText() == "" {
-		e.formConnect.url.SetText(e.tokenServer.TestServer.GetUrl())
-	}
-
 	// Prepara a requisição
 	req := new(HttpRequest)
 	req.SetMethod(e.method)
 
-	if test {
-		req.SetUrl(e.tokenServer.TestServer.GetUrl())
-	} else {
-		req.SetUrl(e.formConnect.url.GetText())
+	url := e.formConnect.url.GetText()
+	if url == "" {
+		if e.errorFunc != nil {
+			e.errorFunc(errors.New("URL em branco"))
+		}
+		return
 	}
+	req.SetUrl(url)
 
 	for k := range e.header {
 		req.AddHeader(e.header[k].Key, e.header[k].Value)
@@ -151,7 +143,10 @@ func (e *ConnectServerToken) getToken(test bool) {
 	// Monta a resposta do servidor de teste
 	err := json.Unmarshal([]byte(response), &e.tokenServer.Token)
 	if err != nil {
-		panic(err)
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New("ConnectServerToken().getToken().json.Unmarshal().error"), err))
+		}
+		return
 	}
 
 	// Escreve o token recebido na UI
@@ -166,6 +161,9 @@ func (e *ConnectServerToken) getToken(test bool) {
 	}
 }
 
+func (e *ConnectServerToken) SetConfigTokenUrl() {
+	e.formConnect.url.SetText(e.tokenServer.TestServer.GetUrl())
+}
 func (e *ConnectServerToken) mountFormToken() {
 
 	e.form = tview.NewForm()
@@ -175,7 +173,8 @@ func (e *ConnectServerToken) mountFormToken() {
 	e.formConnect.Init(e)
 	e.formConnect.Mount(e.form)
 
-	e.form.AddButton("Get test token", e.GetTestToken)
+	e.form.AddButton("Set teste url", e.SetConfigTokenUrl)
+	e.form.AddButton("Get token", e.GetToken)
 
 	e.form.AddTextView("Resposta:", "", e.fieldWidth, 1, false, false)
 

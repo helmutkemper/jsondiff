@@ -3,6 +3,7 @@ package diffServer
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"github.com/rivo/tview"
 )
 
@@ -12,6 +13,11 @@ type CompareController struct {
 	dataBPointer *Data
 	indexErr     int
 	index        int
+	errorFunc    func(error)
+}
+
+func (e *CompareController) SetErrorFunc(f func(error)) {
+	e.errorFunc = f
 }
 
 func (e *CompareController) SetLog(text string) {
@@ -146,12 +152,18 @@ func (e *CompareController) GetElements(index int) (elementA, elementB []byte) {
 	if index >= 0 && index < len(e.dataAPointer.Data) {
 		elementA, err = json.MarshalIndent(e.dataAPointer.Data[index], "", "  ")
 		if err != nil {
-			panic(err)
+			if e.errorFunc != nil {
+				e.errorFunc(errors.Join(errors.New("CompareController().GetElements().json.Unmarshal(A).error"), err))
+			}
+			return
 		}
 
 		elementB, err = json.MarshalIndent(e.dataAPointer.Data[index], "", "  ")
 		if err != nil {
-			panic(err)
+			if e.errorFunc != nil {
+				e.errorFunc(errors.Join(errors.New("CompareController().GetElements().json.Unmarshal(A).error"), err))
+			}
+			return
 		}
 
 		elementA, elementB = e.jsColor(elementA, elementB)

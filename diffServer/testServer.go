@@ -2,15 +2,17 @@ package diffServer
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 )
 
 type TestServer struct {
-	server   *httptest.Server
-	header   map[string]string
-	response string
-	url      string
+	server    *httptest.Server
+	header    map[string]string
+	response  string
+	url       string
+	errorFunc func(error)
 }
 
 func (e *TestServer) GetUrl() (url string) {
@@ -24,7 +26,10 @@ func (e *TestServer) GetUrl() (url string) {
 func (e *TestServer) SetResponse(response any) {
 	data, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
-		panic(err)
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New("TestServer().SetResponse().json.Unmarshal().error"), err))
+		}
+		return
 	}
 	e.response = string(data)
 }
@@ -46,6 +51,10 @@ func (e *TestServer) Init() {
 			w.Header().Set(k, v)
 		}
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(e.response))
+		_, err := w.Write([]byte(e.response))
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New("TestServer().Init().w.Write().error"), err))
+		}
+		return
 	}))
 }

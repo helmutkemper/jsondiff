@@ -2,6 +2,7 @@ package diffServer
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/rivo/tview"
 	"strconv"
@@ -24,6 +25,12 @@ type ConnectServerData struct {
 	//eventOnButtonGetTestToken func()
 	//eventOnButtonGetRealToken func()
 	//eventOnButtonGetTestData  func()
+	errorFunc func(error)
+}
+
+func (e *ConnectServerData) SetErrorFunc(f func(error)) {
+	e.errorFunc = f
+	e.ConnectServerToken.errorFunc = f
 }
 
 func (e *ConnectServerData) SetDataSend(data *Data) {
@@ -152,8 +159,8 @@ func (e *ConnectServerData) mountFormData() {
 	e.formConnect.Init(e)
 	e.formConnect.Mount(e.form)
 
-	e.form.AddButton("test token", e.buttonGetTestToken)
-	e.form.AddButton("real token", e.buttonGetRealToken)
+	//e.form.AddButton("Get token", e.buttonGetTestToken)
+	//e.form.AddButton("real token", e.buttonGetRealToken)
 	e.form.AddButton("test data", e.buttonGetTestData)
 
 	//e.form.AddTextView("Resposta:", "", e.fieldWidth, 1, false, false)
@@ -176,14 +183,14 @@ func (e *ConnectServerData) mountFormData() {
 //}
 
 func (e *ConnectServerData) buttonGetTestData() {
-	for kh := range e.formConnect.header {
-		if e.formConnect.header[kh].GetLabel() == "Authorization" {
-			if e.formConnect.header[kh].GetText() == "" {
-				e.buttonGetTestToken()
-				break
-			}
-		}
-	}
+	//for kh := range e.formConnect.header {
+	//	if e.formConnect.header[kh].GetLabel() == "Authorization" {
+	//		if e.formConnect.header[kh].GetText() == "" {
+	//			e.buttonGetTestToken()
+	//			break
+	//		}
+	//	}
+	//}
 	e.SetStatus("Aguardando dado de teste")
 	//go func() {
 	//defer e.SetStatusNeutro()
@@ -202,31 +209,31 @@ func (e *ConnectServerData) buttonGetTestData() {
 	//}()
 }
 
-func (e *ConnectServerData) buttonGetRealToken() {
-	e.SetStatus("Aguardando token real")
-	//go func() {
-	//	defer e.SetStatusNeutro()
-	e.ConnectServerToken.GetRealToken()
+//func (e *ConnectServerData) buttonGetRealToken() {
+//	e.SetStatus("Aguardando token real")
+//	//go func() {
+//	//	defer e.SetStatusNeutro()
+//	e.ConnectServerToken.GetRealToken()
+//
+//	//if e.eventOnButtonGetRealToken != nil {
+//	//	e.eventOnButtonGetRealToken()
+//	//}
+//	//}()
+//	e.SetStatusNeutro()
+//}
 
-	//if e.eventOnButtonGetRealToken != nil {
-	//	e.eventOnButtonGetRealToken()
-	//}
-	//}()
-	e.SetStatusNeutro()
-}
-
-func (e *ConnectServerData) buttonGetTestToken() {
-	e.SetStatus("Aguardando token de teste")
-	//go func() {
-	//	defer e.SetStatusNeutro()
-	e.ConnectServerToken.GetTestToken()
-
-	//if e.eventOnButtonGetTestToken != nil {
-	//	e.eventOnButtonGetTestToken()
-	//}
-	//}()
-	e.SetStatusNeutro()
-}
+//func (e *ConnectServerData) buttonGetTestToken() {
+//	e.SetStatus("Aguardando token de teste")
+//	//go func() {
+//	//	defer e.SetStatusNeutro()
+//	e.ConnectServerToken.GetToken()
+//
+//	//if e.eventOnButtonGetTestToken != nil {
+//	//	e.eventOnButtonGetTestToken()
+//	//}
+//	//}()
+//	e.SetStatusNeutro()
+//}
 
 func (e *ConnectServerData) GetTestData() {
 	e.getData(true)
@@ -264,7 +271,10 @@ func (e *ConnectServerData) getData(test bool) {
 	// Monta a resposta do servidor de teste
 	err := json.Unmarshal([]byte(response), e.dataReceiverPointer)
 	if err != nil {
-		panic(err)
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New(fmt.Sprintf("ConnectServerData().getData(%v).json.Unmarshal().error", test)), err))
+		}
+		return
 	}
 
 	//// Escreve o token recebido na UI

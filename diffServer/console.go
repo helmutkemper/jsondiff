@@ -12,6 +12,7 @@ type Console struct {
 	app                *tview.Application
 	menu               *tview.List
 	pages              *tview.Pages
+	modal              *tview.Modal
 	pageName           string
 	mainGrid           *tview.Grid
 	connectServerAData ConnectServerData
@@ -27,16 +28,30 @@ func (e *Console) newGridCompare() {
 	e.compareController.Init()
 }
 
-func (e *Console) newPages() {
-	e.pages = tview.NewPages()
-	e.pages.SetBorder(true)
-	e.pages.AddPage("main", tview.NewModal().SetText("vivo!").
-		AddButtons([]string{"Quit"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+func (e *Console) newModalError() {
+	e.modal = tview.NewModal()
+	e.modal.SetText("vivo!")
+	e.modal.AddButtons([]string{"Quit"})
+	e.modal.SetDoneFunc(
+		func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "Quit" {
 				e.app.Stop()
 			}
-		}), true, true)
+		},
+	)
+}
+
+func (e *Console) SetError(err error) {
+	e.modal.SetText(err.Error())
+	e.app.SetFocus(e.pages)
+	e.app.SetFocus(e.modal)
+	e.pages.SendToFront("error")
+}
+
+func (e *Console) newPages() {
+	e.pages = tview.NewPages()
+	e.pages.SetBorder(true)
+	e.pages.AddPage("error", e.modal, false, true)
 
 	e.pageName = "mainDataTest"
 	e.pages.AddPage(e.pageName, e.dataController.form, true, true)
@@ -54,7 +69,7 @@ func (e *Console) newPages() {
 	e.pageName = "serverBToken"
 	e.pages.AddPage(e.pageName, e.connectServerBData.ConnectServerToken.form, true, true)
 
-	e.pageName = "serverAData"
+	e.pageName = "serverAToken"
 	e.pages.SendToFront(e.pageName)
 }
 
@@ -166,18 +181,25 @@ func (e *Console) Init() {
 	e.app.EnablePaste(true)
 	e.app.EnableMouse(true)
 
+	e.connectServerAData.SetErrorFunc(e.SetError)
 	e.connectServerAData.SetDataSend(&e.dataController.DataTestA)
 	e.connectServerAData.SetDataReceiver(&e.dataController.DataServerA)
 	e.connectServerAData.Init(e.fieldWidth)
+
+	e.connectServerBData.SetErrorFunc(e.SetError)
 	e.connectServerBData.SetDataSend(&e.dataController.DataTestB)
 	e.connectServerBData.SetDataReceiver(&e.dataController.DataServerB)
 	e.connectServerBData.Init(e.fieldWidth)
+
+	e.dataController.SetErrorFunc(e.SetError)
 	e.dataController.Init(e.fieldWidth)
 
+	e.compareController.SetErrorFunc(e.SetError)
 	e.compareController.SetDataAPointer(&e.dataController.DataServerA)
 	e.compareController.SetDataBPointer(&e.dataController.DataServerB)
 
 	e.newGridCompare()
+	e.newModalError()
 	e.newPages()
 	e.newMenu()
 	e.newGrid()

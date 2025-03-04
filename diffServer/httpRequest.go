@@ -2,6 +2,7 @@ package diffServer
 
 import (
 	"encoding/base64"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -16,7 +17,8 @@ type HttpRequest struct {
 	method  string
 	content string
 
-	event func([]string)
+	event     func([]string)
+	errorFunc func(error)
 }
 
 // SetEvent Ponteiro para função externa, chamada quando um evento acontece
@@ -76,7 +78,10 @@ func (e *HttpRequest) Request() (bodyResponse string) {
 
 	request, err = http.NewRequest(e.method, urlStr, strings.NewReader(e.content))
 	if err != nil {
-		panic(err)
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New("HttpRequest().Request().http.NewRequest().error"), err))
+		}
+		return
 	}
 
 	for _, header := range e.header {
@@ -85,13 +90,19 @@ func (e *HttpRequest) Request() (bodyResponse string) {
 
 	response, err = http.DefaultClient.Do(request)
 	if err != nil {
-		panic(err)
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New("HttpRequest().Request().http.Do().error"), err))
+		}
+		return
 	}
 	defer response.Body.Close()
 
 	body, err = io.ReadAll(response.Body)
 	if err != nil {
-		panic(err)
+		if e.errorFunc != nil {
+			e.errorFunc(errors.Join(errors.New("TestServer().Request().io.ReadAll().error"), err))
+		}
+		return
 	}
 
 	if e.event != nil {

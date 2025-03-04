@@ -9,20 +9,28 @@ import (
 
 // DataController Gera os dados a serem usados nos testes e recebe os dados reais.
 type DataController struct {
-	DataTestA   Data
-	DataTestB   Data
-	DataServerA Data
-	DataServerB Data
-
-	fieldWidth int
-	formData   FormDataTest
-	form       *tview.Form
-
+	DataTestA    Data
+	DataTestB    Data
+	DataServerA  Data
+	DataServerB  Data
+	fieldWidth   int
+	formData     FormDataTest
+	form         *tview.Form
 	dataKeys     []string
 	amountOfData int
 	interactions int
 	numberOfKeys int
 	deleteKeys   int
+	errorFunc    func(error)
+}
+
+func (e *DataController) SetErrorFunc(f func(error)) {
+	e.errorFunc = f
+
+	e.DataTestA.SetErrorFunc(f)
+	e.DataTestB.SetErrorFunc(f)
+	e.DataServerA.SetErrorFunc(f)
+	e.DataServerB.SetErrorFunc(f)
 }
 
 func (e *DataController) GetFieldWidth() (fieldWidth int) {
