@@ -1,8 +1,8 @@
 # jsonDiff
 
-![./img/compareData.png](./img/compareData.png)
+![./img/compareData.png](./img/4.compare.png)
 
-Aplicação para terminal feita compara dados entre servidores em migração.
+Aplicação feita para compara dados entre servidores em migração.
 
 Esta aplicação foi feita para comparar dados entre duas empresas distintas com as 
 mesmas informações, onde a empresa A será substituída pela empresa B e os dados devem 
@@ -10,14 +10,14 @@ ser os mesmos.
 
 ## Funcionamento
 
-A aplicação recebe a configuração de dois servidores, A e B, faz a coleta de dados e
-depois compara os mesmos, mostrando as chaves com anomalias.
+A aplicação recebe a configuração de dois servidores, A e B, e faz a comparação das chaves recebidas, mostrando as 
+inconsistências.
 
 ## Configurações
 
 ### Token
 
-![./img/tokenServer.png](./img/tokenServer.png)
+![./img/tokenServer.png](./img/2.token.png)
 
 Para adicionar configurações de header ou parâmetros por URL, acesse o arquivo 
 `connectServerToken.go` e na função 
