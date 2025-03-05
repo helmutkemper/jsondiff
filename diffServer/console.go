@@ -24,6 +24,22 @@ type Console struct {
 	screenHeight       int
 }
 
+func (e *Console) AddHeaderServerA(key, value string) {
+	e.connectServerAData.AddHeader(key, value)
+}
+
+func (e *Console) AddHeaderServerB(key, value string) {
+	e.connectServerBData.AddHeader(key, value)
+}
+
+func (e *Console) AddParamServerA(key, value string) {
+	e.connectServerAData.AddParam(key, value)
+}
+
+func (e *Console) AddParamServerB(key, value string) {
+	e.connectServerBData.AddParam(key, value)
+}
+
 func (e *Console) newGridCompare() {
 	e.compareController.Init()
 }

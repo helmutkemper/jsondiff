@@ -13,14 +13,8 @@ type ConfigServer struct {
 }
 
 func (e *ConfigServer) Init() {
-	e.Header = map[string]string{
-		"token": "",
-		"type":  "",
-	}
-	e.Parameter = map[string]string{
-		"id":   "",
-		"user": "",
-	}
+	e.Header = make(map[string]string)
+	e.Parameter = make(map[string]string)
 }
 
 type Config struct {
@@ -39,14 +33,27 @@ func (e *Config) Init() {
 
 func main() {
 	// Detecta se o arquivo de configuração existe e carrega o arquivo
+	config := new(Config)
 	if _, err := os.Stat("config.json"); err == nil {
 		file, _ := ioutil.ReadFile("config.json")
-		config := new(Config)
 		_ = json.Unmarshal(file, &config)
 	} else {
-		config := new(Config)
 		config.Init()
+		file, _ := json.MarshalIndent(config, "", " ")
+		_ = ioutil.WriteFile("config.json", file, 0644)
 	}
 	c := new(diffServer.Console)
+	for k, v := range config.DataServerA.Header {
+		c.AddHeaderServerA(k, v)
+	}
+	for k, v := range config.DataServerA.Parameter {
+		c.AddParamServerA(k, v)
+	}
+	for k, v := range config.DataServerB.Header {
+		c.AddHeaderServerB(k, v)
+	}
+	for k, v := range config.DataServerB.Parameter {
+		c.AddParamServerB(k, v)
+	}
 	c.Init()
 }

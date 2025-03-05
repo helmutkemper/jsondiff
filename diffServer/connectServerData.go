@@ -62,6 +62,13 @@ func (e *ConnectServerData) SetContent(content string) {
 	e.content = content
 }
 
+func (e *ConnectServerData) AddHeader(key, value string) {
+	if e.header == nil {
+		e.header = make([]keyValue, 0)
+	}
+	e.header = append(e.header, keyValue{key, value})
+}
+
 func (e *ConnectServerData) SetHeader(key, value string) {
 	for k := range e.header {
 		if e.header[k].Key == key {
@@ -69,6 +76,13 @@ func (e *ConnectServerData) SetHeader(key, value string) {
 			return
 		}
 	}
+}
+
+func (e *ConnectServerData) AddParam(key, value string) {
+	if e.param == nil {
+		e.param = make([]keyValue, 0)
+	}
+	e.param = append(e.param, keyValue{key, value})
 }
 
 func (e *ConnectServerData) SetParam(key, value string) {
@@ -118,12 +132,12 @@ func (e *ConnectServerData) Init(fieldWidth int) {
 	e.fieldWidth = fieldWidth
 	e.dataServer.Init()
 
-	e.header = make([]keyValue, 0)
+	//e.header = make([]keyValue, 0)
 
 	// Não apagar ou modificar este header, ele afeta a função onToken(tk token)
 	e.header = append(e.header, keyValue{"Authorization", ""})
 
-	e.param = make([]keyValue, 0)
+	//e.param = make([]keyValue, 0)
 	//e.param = append(e.param, keyValue{"user", ""})
 	//e.param = append(e.param, keyValue{"password", ""})
 
