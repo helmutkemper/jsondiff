@@ -1,0 +1,34 @@
+{
+ "dataServerA": {
+  "header": {
+   "header1": "value1"
+  },
+  "parameter": {
+    "parameter1": "value1"
+  }
+ },
+ "tokenServerA": {
+  "header": {
+    "header1": "value1"
+  },
+  "parameter": {
+    "parameter1": "value1"
+  }
+ },
+ "dataServerB": {
+  "header": {
+    "header1": "value1"
+  },
+  "parameter": {
+    "parameter1": "value1"
+  }
+ },
+ "tokenServerB": {
+  "header": {
+    "header1": "value1"
+  },
+  "parameter": {
+    "parameter1": "value1"
+  }
+ }
+}
